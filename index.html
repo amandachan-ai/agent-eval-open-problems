@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Five Hard Problems in Evaluating AI Agents: Working Notes</title>
+<style>
+:root {
+  color-scheme: light;
+  --c-bg: #f7f3ea;
+  --c-paper: #fffdf8;
+  --c-soft: #efe9de;
+  --c-hover: #f3e9df;
+  --c-border: #d8d0c3;
+  --c-text: #29251f;
+  --c-muted: #6f675d;
+  --c-accent: #a84f36;
+  --c-accent-dark: #7a3f2b;
+  --c-green: #44695a;
+  --c-amber: #946015;
+  --c-red: #a9433b;
+  --c-purple: #6d5a8f;
+  --c-code: #efe8dc;
+  --c-pre: #26231f;
+
+  /* Common aliases used by the existing documents. */
+  --bg: var(--c-bg);
+  --white: var(--c-paper);
+  --panel: var(--c-paper);
+  --panel2: var(--c-soft);
+  --card: var(--c-paper);
+  --card2: var(--c-soft);
+  --soft: var(--c-soft);
+  --ink: var(--c-text);
+  --txt: var(--c-text);
+  --text: var(--c-text);
+  --navy: var(--c-text);
+  --muted: var(--c-muted);
+  --dim: var(--c-muted);
+  --line: var(--c-border);
+  --border: var(--c-border);
+  --accent: var(--c-accent);
+  --blue: var(--c-accent);
+  --blue-dark: var(--c-accent-dark);
+  --blue-bg: #f4e4dc;
+  --pri: var(--c-red);
+  --pri-bg: #f8e8e4;
+  --good: var(--c-green);
+  --ok: var(--c-green);
+  --green: var(--c-green);
+  --llm: var(--c-green);
+  --ok-bg: #e8efe9;
+  --green-bg: #e8efe9;
+  --llm-bg: #e8efe9;
+  --teal: #4f7465;
+  --teal-bg: #e8efe9;
+  --warn: var(--c-amber);
+  --amb: var(--c-amber);
+  --amber: var(--c-amber);
+  --warn-bg: #fbf0dd;
+  --amb-bg: #fbf0dd;
+  --amber-bg: #fbf0dd;
+  --bad: var(--c-red);
+  --red: var(--c-red);
+  --red-bg: #f8e8e4;
+  --purple: var(--c-purple);
+  --pur: var(--c-purple);
+  --purple-bg: #f0ebf3;
+  --pur-bg: #f0ebf3;
+  --code-bg: var(--c-code);
+  --pre-bg: var(--c-pre);
+  --shadow: 0 12px 34px rgba(74, 58, 42, 0.09);
+}
+
+html {
+  background: var(--c-bg);
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--c-bg) !important;
+  color: var(--c-text) !important;
+  font-family: "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", system-ui, sans-serif !important;
+}
+
+header.hero,
+.hero {
+  color: var(--c-text) !important;
+  background: linear-gradient(135deg, #f1dfd2 0%, #fbf8f1 60%, #e7eee5 100%) !important;
+  border-bottom: 1px solid var(--c-border) !important;
+}
+
+header:not(.hero) {
+  padding: 28px 30px !important;
+  border: 1px solid var(--c-border) !important;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f1dfd2 0%, #fbf8f1 64%, #efe8dc 100%);
+  box-shadow: var(--shadow);
+}
+
+header.hero p,
+.hero p,
+.hero-lead,
+.hero .sub,
+.hero .meta {
+  color: var(--c-muted) !important;
+}
+
+.hero::after {
+  border-color: rgba(168, 79, 54, 0.18) !important;
+  box-shadow:
+    0 0 0 44px rgba(168, 79, 54, 0.035),
+    0 0 0 92px rgba(68, 105, 90, 0.025) !important;
+}
+
+.hero .badge,
+.hero .eyebrow,
+.hero .pill,
+header.hero .badge {
+  color: var(--c-text) !important;
+  background: rgba(255, 253, 248, 0.72) !important;
+  border-color: rgba(111, 103, 93, 0.34) !important;
+}
+
+.eyebrow::before {
+  background: var(--c-accent) !important;
+}
+
+main {
+  background: var(--c-paper) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.topnav,
+#bar {
+  background: rgba(255, 253, 248, 0.96) !important;
+  border-color: var(--c-border) !important;
+}
+
+.topnav strong,
+.topnav a {
+  color: var(--c-text) !important;
+}
+
+.topnav a:hover,
+.topnav a:focus {
+  color: var(--c-accent-dark) !important;
+  background: var(--c-hover) !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+strong {
+  color: var(--c-text);
+}
+
+h2 {
+  border-color: var(--c-border) !important;
+}
+
+h4,
+a {
+  color: var(--c-accent) !important;
+}
+
+h2.sec .num {
+  color: var(--c-paper) !important;
+}
+
+a:hover,
+a:focus {
+  color: var(--c-accent-dark) !important;
+}
+
+button,
+.button,
+a.button,
+[role="button"] {
+  color: var(--c-paper) !important;
+  background: var(--c-accent) !important;
+  border: 1px solid var(--c-accent) !important;
+  border-radius: 8px;
+  padding: 7px 13px;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+button:hover,
+button:focus,
+.button:hover,
+.button:focus,
+a.button:hover,
+a.button:focus,
+[role="button"]:hover,
+[role="button"]:focus {
+  color: #fff !important;
+  background: var(--c-accent-dark) !important;
+  border-color: var(--c-accent-dark) !important;
+}
+
+button:focus-visible,
+.button:focus-visible,
+a.button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid rgba(168, 79, 54, 0.32);
+  outline-offset: 2px;
+}
+
+code {
+  color: var(--c-accent-dark) !important;
+  background: var(--c-code) !important;
+  border-color: var(--c-border) !important;
+}
+
+pre {
+  color: #f5efe5 !important;
+  background: var(--c-pre) !important;
+  border-color: #403a33 !important;
+}
+
+pre code {
+  color: inherit !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+table {
+  color: var(--c-text);
+  background: var(--c-paper) !important;
+}
+
+th,
+td {
+  border-color: var(--c-border) !important;
+}
+
+th {
+  color: var(--c-text) !important;
+  background: var(--c-soft) !important;
+}
+
+tbody tr:nth-child(even),
+tbody tr:nth-child(even) td {
+  background: #fbf8f1 !important;
+}
+
+tbody tr:hover,
+tbody tr:hover td {
+  color: var(--c-text) !important;
+  background: var(--c-hover) !important;
+}
+
+.card,
+.kpi,
+.gr,
+.nav,
+figure,
+.item,
+.box,
+.callout {
+  color: var(--c-text);
+  background: var(--c-paper);
+  border-color: var(--c-border);
+  box-shadow: 0 6px 20px rgba(74, 58, 42, 0.055);
+}
+
+.kpi b,
+.gr b,
+.value {
+  color: var(--c-text) !important;
+}
+
+.nav,
+.table-wrap,
+figure {
+  background: var(--c-paper) !important;
+  border-color: var(--c-border) !important;
+}
+
+.box.tip,
+.callout.info {
+  background: #edf1eb !important;
+  border-color: var(--c-green) !important;
+}
+
+.box.fact,
+.callout.good,
+.item.done {
+  background: #e8efe9 !important;
+  border-color: var(--c-green) !important;
+}
+
+.box.warn,
+.callout.warn {
+  background: #fbf0dd !important;
+  border-color: var(--c-amber) !important;
+}
+
+.box.unv,
+.callout.purple {
+  background: #f0ebf3 !important;
+  border-color: var(--c-purple) !important;
+}
+
+.callout.bad {
+  background: #f8e8e4 !important;
+  border-color: var(--c-red) !important;
+}
+
+.verdict {
+  color: var(--c-text) !important;
+  background: linear-gradient(135deg, #f1dfd2, #fffdf8 58%, #e7eee5) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: var(--shadow);
+}
+
+.quote,
+blockquote {
+  color: var(--c-text) !important;
+  background: #f0ebf3 !important;
+  border-color: var(--c-purple) !important;
+}
+
+.bar,
+.bar-track,
+#bar .track {
+  background: #e6dfd4 !important;
+}
+
+.bar i,
+.bar-fill,
+#bar .fill {
+  background: linear-gradient(90deg, var(--c-accent), var(--c-green)) !important;
+}
+
+.stage {
+  background: linear-gradient(90deg, #f4e4dc, var(--c-paper)) !important;
+  border-color: var(--c-accent) !important;
+}
+
+.xlinks a,
+.docnav a {
+  color: var(--c-text) !important;
+  background: var(--c-paper) !important;
+  border-color: var(--c-border) !important;
+}
+
+.xlinks a:hover,
+.docnav a:hover {
+  color: var(--c-accent-dark) !important;
+  background: var(--c-hover) !important;
+}
+
+.docnav a.here {
+  color: var(--c-paper) !important;
+  background: var(--c-accent) !important;
+  border-color: var(--c-accent) !important;
+}
+
+.tag {
+  color: #514b43 !important;
+  background: var(--c-soft) !important;
+  border-color: #c9c0b4 !important;
+}
+
+.tag.t-have {
+  color: var(--c-accent-dark) !important;
+  background: #f4e4dc !important;
+  border-color: #d8b7a8 !important;
+}
+
+.tag.ok,
+.tag.t-ver,
+.t-ship,
+.t-own,
+.status.pass,
+.st-ok {
+  color: #315447 !important;
+  background: #e1ece3 !important;
+  border-color: #abc4b2 !important;
+}
+
+.tag.wip,
+.t-open,
+.t-exp,
+.status.partial,
+.st-part {
+  color: #754b10 !important;
+  background: #f8e9ca !important;
+  border-color: #dfc189 !important;
+}
+
+.tag.no,
+.t-drop,
+.t-none,
+.status.fail,
+.st-no {
+  color: #853730 !important;
+  background: #f4dfdb !important;
+  border-color: #d8a9a2 !important;
+}
+
+.tag.local,
+.tag.q,
+.tag.t-unv,
+.tag.t-cond {
+  color: #594675 !important;
+  background: #f0ebf3 !important;
+  border-color: #c8bad2 !important;
+}
+
+.foot,
+footer,
+.muted,
+.note,
+.small,
+small,
+.sub,
+.src,
+.dt,
+figcaption {
+  color: var(--c-muted) !important;
+}
+
+@media (max-width: 720px) {
+  header:not(.hero) {
+    padding: 22px !important;
+  }
+
+  .wrap,
+  main,
+  section,
+  .card,
+  .box,
+  .callout,
+  figure {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .item {
+    grid-template-columns: 26px minmax(0, 1fr) !important;
+  }
+
+  .item > * {
+    min-width: 0;
+  }
+
+  .nav ol {
+    columns: 1 !important;
+  }
+
+  table {
+    max-width: 100%;
+  }
+
+  code {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  pre,
+  .ascii {
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  pre code {
+    white-space: pre-wrap !important;
+    word-break: break-word;
+  }
+
+  img,
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+@media print {
+  body {
+    background: #fff !important;
+  }
+
+  header.hero,
+  .hero,
+  header:not(.hero),
+  main,
+  .card,
+  .kpi,
+  .gr {
+    box-shadow: none !important;
+  }
+}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px 96px}
+  .hero{padding:48px 24px 38px;margin-bottom:30px}
+  .hero-inner{max-width:1080px;margin:0 auto}
+  .hero h1{margin:0 0 10px;font-size:clamp(28px,4.6vw,44px)}
+  .hero p{max-width:820px;margin:0}
+  main{border:1px solid var(--c-border);border-radius:16px;padding:28px 34px}
+  h2{margin:44px 0 14px;padding-bottom:9px;border-bottom:2px solid var(--c-border)}
+  h3{margin:28px 0 10px}
+  p,li{line-height:1.75}
+  table{width:100%;border-collapse:collapse;margin:16px 0}
+  th,td{padding:10px 12px;text-align:left;vertical-align:top;border:1px solid var(--c-border);overflow-wrap:break-word;word-break:normal}
+  figure{margin:20px 0}
+  svg{max-width:100%;height:auto;display:block}
+  .toc ol{margin:6px 0 0 18px}
+  @media(max-width:720px){main{padding:22px 18px}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <h1>Five Hard Problems in Evaluating AI Agents: Working Notes</h1>
+    <p>For people who build LLM and agent evaluations: proactive triggers, multi-turn interaction, ground truth over large data, prompt changes that regress other cases, and rigorous experiments that yield only mild gains. Each problem is laid out as "common practice → where it falls short → better directions", followed by a feasibility tiering.</p>
+    <p class="meta">
+      Created: <time datetime="2026-10-06">2026-10-06</time>
+      · Last updated: <time datetime="2026-10-15">2026-10-15</time>
+      · License: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+    </p>
+  </div>
+</header>
+
+<div class="wrap">
+<main>
+
+<div class="callout warn"><strong class="title">Disclaimer</strong>
+These are personal working notes and opinions, not those of any employer or product team. The lessons are generalized from hands-on experience; all examples are <strong>simplified or hypothetical</strong>, every number is an illustrative assumption rather than a measurement from any real system, and no non-public data is included.</div>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#tldr">Bottom line</a></li>
+    <li><a href="#proactive">Problem 1: Proactive agents — "it did not exist a second ago"</a></li>
+    <li><a href="#multiturn">Problem 2: Multi-turn interaction — can a static eval set still work?</a></li>
+    <li><a href="#groundtruth">Problem 3: Data too large for any human to verify ground truth</a></li>
+    <li><a href="#prompt">Problem 4: Fixing A with a prompt change breaks B</a></li>
+    <li><a href="#mild">Problem 5: A rigorous experiment, a mild improvement</a></li>
+    <li><a href="#tiers">What is solvable now, what needs trade-offs, what needs new methods</a></li>
+    <li><a href="#questions">Open questions for readers</a></li>
+    <li><a href="#refs">References</a></li>
+  </ol>
+</nav>
+
+<h2 id="tldr">1. Bottom line</h2>
+<ul>
+  <li><strong>Freeze the scenario and the success criteria, not the verbatim answer or the verbatim dialogue.</strong> This one principle addresses proactive triggers, multi-turn interaction and large-scale ground truth.</li>
+  <li><strong>Never look only at the average.</strong> A system prompt is a global parameter. Always report per-case flips (up / down / unchanged), and first learn how many cases flip when nothing changes.</li>
+  <li><strong>Estimate the ceiling before investing; validate the instrument before optimizing.</strong> If the targeted issue is a small share of user dissatisfaction, or the judge disagrees with users, even a rigorous experiment can only buy a mild result.</li>
+</ul>
+
+<h2 id="proactive">2. Problem 1: Proactive agents — "it did not exist a second ago"</h2>
+<p>The input to a proactive agent is not "what the user asked" but "<em>a message that just arrived</em>". A correct evaluation must do two things: ① make the decision at the moment the message arrives, and ② use only information that existed at that moment. I call this <strong>as-of-T (point-in-time) evaluation</strong>. A traditional eval set, whose questions "were always there", simulates neither.</p>
+
+<figure>
+<svg viewBox="0 0 960 300" role="img" aria-label="as-of-T timeline">
+  <rect width="960" height="300" fill="#fffdf8"/>
+  <rect x="40" y="60" width="520" height="150" rx="12" fill="#eef4ea" stroke="#9db58f"/>
+  <rect x="560" y="60" width="360" height="150" rx="12" fill="#f7e6df" stroke="#d29a85" stroke-dasharray="6 5"/>
+  <text x="300" y="50" text-anchor="middle" font-size="15" fill="#2f5d34">Before T: exists, may be read</text>
+  <text x="740" y="50" text-anchor="middle" font-size="15" fill="#8a3a24">After T: does not exist yet, off-limits</text>
+  <line x1="40" y1="135" x2="920" y2="135" stroke="#6b6359" stroke-width="2"/>
+  <g font-size="13" fill="#29251f">
+    <circle cx="110" cy="135" r="9" fill="#d8d0c3"/><text x="110" y="170" text-anchor="middle">m1</text>
+    <circle cx="210" cy="135" r="9" fill="#d8d0c3"/><text x="210" y="170" text-anchor="middle">m2</text>
+    <circle cx="310" cy="135" r="9" fill="#d8d0c3"/><text x="310" y="170" text-anchor="middle">m3</text>
+    <circle cx="410" cy="135" r="9" fill="#d8d0c3"/><text x="410" y="170" text-anchor="middle">m4</text>
+    <circle cx="560" cy="135" r="13" fill="#a84f36"/><text x="560" y="175" text-anchor="middle" font-weight="bold">T: new message arrives</text>
+    <circle cx="690" cy="135" r="9" fill="#efd3c8"/><text x="690" y="170" text-anchor="middle">reply</text>
+    <circle cx="810" cy="135" r="9" fill="#efd3c8"/><text x="810" y="170" text-anchor="middle">follow-up</text>
+  </g>
+  <text x="560" y="98" text-anchor="middle" font-size="13" fill="#a84f36">Decide now: act / stay silent / defer</text>
+  <text x="480" y="250" text-anchor="middle" font-size="14" fill="#29251f">Stream replay: feed m1, m2, m3… one at a time and ask "should I act now?" at every arrival</text>
+  <text x="480" y="276" text-anchor="middle" font-size="14" fill="#29251f">Snapshot eval: ask once at T — usually without knowing whether T was "the right moment"</text>
+</svg>
+<figcaption>Figure 1: the two rules of as-of-T evaluation.</figcaption>
+</figure>
+
+<p><strong>Hypothetical example:</strong> at T someone in a group chat writes "Can anyone take a look at this doc?", and a few minutes later a colleague replies "I'll do it". If the agent's retrieval during evaluation can see the later "I'll do it", it may answer "Great, it's yours" — something no one could know at T. And if "I'll do it" is used as the reference answer, we would wrongly conclude the agent should volunteer the user.</p>
+
+<h3>Common practice and its limits</h3>
+<p>The common practice is a <strong>single point-in-time snapshot</strong>: freeze the conversation before the trigger, add a fixed "current time", and ask the agent whether to act and what to say. Limits:</p>
+<ol>
+  <li><strong>It evaluates a moment, not timing.</strong> Too early, too late, repeated nudges, and how often the agent interrupts per day are all invisible.</li>
+  <li><strong>Future-information leakage.</strong> Most retrieval systems cannot "go back in time". Searching outputs for leaked strings afterwards cannot prove absence: future information changes tone, certainty and <em>what gets omitted</em>.</li>
+  <li><strong>The unit of evaluation does not match the product trigger.</strong> For example, the product fires only after a specific user gesture, while the dataset samples every message.</li>
+  <li><strong>Positives are rare.</strong> An agent that always stays silent can still score high accuracy.</li>
+  <li><strong>Hindsight bias in labels.</strong> Annotators see the whole conversation before deciding what should have happened at T.</li>
+  <li><strong>The real outcome arrives later.</strong> Whether a suggestion was accepted, or how much it was edited, is a delayed signal.</li>
+</ol>
+
+<h3>Better directions</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Approach</th><th>How</th><th>Cost</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Stream replay</strong></td><td>For every message, build the prefix "up to and including it", treat it as just arrived, and ask once. Metrics: per-arrival precision / recall, messages until first action, duplicate actions, interruptions per 100 messages</td><td>Low (any timestamped data works)</td></tr>
+    <tr><td><strong>Minimal pairs</strong></td><td>The same conversation with and without the trigger message — the decision must flip; add a distractor — the decision must not change</td><td>Low; no full gold needed</td></tr>
+    <tr><td><strong>Time-fenced retrieval</strong></td><td>Retrieve only content created ≤ T; if that is impossible, claim only "present-day observation", never historical replay</td><td>Needs system support</td></tr>
+    <tr><td><strong>Make the message truly appear at that second</strong></td><td>Post messages one by one into a test environment; the last one is T; then trigger the agent</td><td>High: environment pollution, indexing latency</td></tr>
+    <tr><td><strong>Sample silence online</strong></td><td>Evaluate not only cases where the agent acted but a sample of cases where it chose silence — otherwise recall is unmeasurable</td><td>Needs telemetry and privacy review</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="multiturn">3. Problem 2: Multi-turn interaction — can a static eval set still work?</h2>
+<p><strong>Yes — it depends on what is static.</strong> Multi-turn evaluation mixes two questions:</p>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Question</th><th>Suitable set</th><th>Blind spot</th></tr></thead>
+  <tbody>
+    <tr><td>Given a correct history, is <strong>this turn</strong> right?</td><td>Static transcripts (reproducible, cheap)</td><td>How the agent recovers from its own mistakes</td></tr>
+    <tr><td>Did the whole interaction <strong>end</strong> with the job done?</td><td>Static scenario + criteria, dynamic dialogue (simulated user or human)</td><td>Verbatim reproducibility (compensate with repeated trials)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<figure>
+<svg viewBox="0 0 960 250" role="img" aria-label="four levels of multi-turn evaluation">
+  <rect width="960" height="250" fill="#fffdf8"/>
+  <defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6b6359"/></marker></defs>
+  <g font-size="14" fill="#29251f">
+    <rect x="20" y="40" width="210" height="110" rx="12" fill="#eef4ea" stroke="#9db58f"/>
+    <text x="125" y="78" text-anchor="middle" font-weight="bold">① Static transcript</text>
+    <text x="125" y="106" text-anchor="middle">Fixed history, grade last turn</text>
+    <rect x="255" y="40" width="210" height="110" rx="12" fill="#f4f1e6" stroke="#c9bd95"/>
+    <text x="360" y="78" text-anchor="middle" font-weight="bold">② Fixed script</text>
+    <text x="360" y="106" text-anchor="middle">User lines written in advance</text>
+    <rect x="490" y="40" width="210" height="110" rx="12" fill="#fbf0e2" stroke="#d9b07a"/>
+    <text x="595" y="78" text-anchor="middle" font-weight="bold">③ Simulated user</text>
+    <text x="595" y="106" text-anchor="middle">LLM with persona + goal</text>
+    <rect x="725" y="40" width="210" height="110" rx="12" fill="#f7e6df" stroke="#d29a85"/>
+    <text x="830" y="78" text-anchor="middle" font-weight="bold">④ Real humans</text>
+    <text x="830" y="106" text-anchor="middle">Dogfood / online sampling</text>
+  </g>
+  <line x1="40" y1="185" x2="920" y2="185" stroke="#6b6359" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="40" y="212" font-size="13" fill="#2f5d34">Reproducible, cheap</text>
+  <text x="920" y="212" font-size="13" fill="#8a3a24" text-anchor="end">Realistic, shows compounding errors</text>
+  <text x="480" y="240" font-size="13" fill="#29251f" text-anchor="middle">All four freeze and version the scenario + criteria; moving right only makes the dialogue more dynamic</text>
+</svg>
+<figcaption>Figure 2: not a choice of one — each level answers a different question.</figcaption>
+</figure>
+
+<h3>What if the answer itself evolves?</h3>
+<p>Once dialogue is dynamic, the "right answer" at turn 3 depends on what the agent said in turns 1 and 2, so verbatim answers cannot be stored in advance. Store what does not depend on the path instead: <strong>goals and end state</strong> (a transcript saying "done" does not count — check the environment), <strong>hidden facts</strong> (known to the user, to be elicited by the agent), <strong>must / must-not rules</strong>, and <strong>interaction constraints</strong> (e.g. finish within N turns). This also avoids penalizing solutions that are better for the user but unforeseen by the task author.</p>
+
+<h3>How to decide whether the eval set may evolve</h3>
+<figure>
+<svg viewBox="0 0 960 260" role="img" aria-label="decision flow for static versus evolving eval sets">
+  <rect width="960" height="260" fill="#fffdf8"/>
+  <defs><marker id="ar2" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6b6359"/></marker></defs>
+  <g font-size="14" fill="#29251f">
+    <rect x="20" y="95" width="200" height="70" rx="12" fill="#f4f1e6" stroke="#c9bd95"/>
+    <text x="120" y="135" text-anchor="middle" font-weight="bold">What are we asking?</text>
+    <rect x="300" y="20" width="270" height="80" rx="12" fill="#eef4ea" stroke="#9db58f"/>
+    <text x="435" y="50" text-anchor="middle" font-weight="bold">"Did anything regress?"</text>
+    <text x="435" y="75" text-anchor="middle" font-size="13">→ Regression: frozen + versioned</text>
+    <rect x="300" y="160" width="270" height="80" rx="12" fill="#fbf0e2" stroke="#d9b07a"/>
+    <text x="435" y="190" text-anchor="middle" font-weight="bold">"What can't it do yet?"</text>
+    <text x="435" y="215" text-anchor="middle" font-size="13">→ Capability pool: may evolve</text>
+    <rect x="660" y="160" width="280" height="80" rx="12" fill="#f4f1e6" stroke="#c9bd95"/>
+    <text x="800" y="190" text-anchor="middle" font-weight="bold">Reviewed + reliably passing</text>
+    <text x="800" y="215" text-anchor="middle" font-size="13">"Graduates" into a new regression version</text>
+    <rect x="660" y="20" width="280" height="80" rx="12" fill="#f7e6df" stroke="#d29a85"/>
+    <text x="800" y="50" text-anchor="middle" font-weight="bold">On a version change</text>
+    <text x="800" y="75" text-anchor="middle" font-size="13">Rerun baseline and candidate; never diff versions</text>
+  </g>
+  <path d="M220,120 L300,62" stroke="#6b6359" stroke-width="2" fill="none" marker-end="url(#ar2)"/>
+  <path d="M220,140 L300,198" stroke="#6b6359" stroke-width="2" fill="none" marker-end="url(#ar2)"/>
+  <path d="M570,200 L660,200" stroke="#6b6359" stroke-width="2" fill="none" marker-end="url(#ar2)"/>
+  <path d="M800,160 L800,100" stroke="#6b6359" stroke-width="2" fill="none" marker-end="url(#ar2)"/>
+</svg>
+<figcaption>Figure 3: a frozen regression set plus an evolving capability pool.</figcaption>
+</figure>
+<p><strong>Risks of a simulated user:</strong> the simulator makes its own mistakes (leaking hidden facts, breaking persona, giving up early), and those mistakes are charged to the agent — so the simulator must be evaluated too. Run each scenario k times; for features where users never see retries, report pass^k.</p>
+
+<h2 id="groundtruth">4. Problem 3: Data too large for any human to verify ground truth</h2>
+<p>To be realistic, test environments (a simulated organization with its messages and documents) often grow larger than anyone can read. Verification cost grows with the data; human understanding does not. As agents get stronger, their errors stop being "nonsense" and become <em>fluent and plausible, but incomplete or mis-scoped</em> — exactly the errors only someone familiar with the data can spot.</p>
+<p><strong>Typical failure patterns (hypothetical):</strong> the agent queries a channel, the tool returns "no messages", and instead of trying another query it fluently asserts "there is no relevant record"; or the gold answer cites a message that lies outside the time range the system can retrieve — an error in the ruler, not the agent.</p>
+
+<figure>
+<svg viewBox="0 0 960 220" role="img" aria-label="ground truth by construction">
+  <rect width="960" height="220" fill="#fffdf8"/>
+  <defs><marker id="ar3" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6b6359"/></marker></defs>
+  <g font-size="14" fill="#29251f">
+    <rect x="20" y="60" width="200" height="90" rx="12" fill="#eef4ea" stroke="#9db58f"/>
+    <text x="120" y="98" text-anchor="middle" font-weight="bold">Fact ledger</text>
+    <text x="120" y="124" text-anchor="middle" font-size="12">Structured, queryable facts</text>
+    <rect x="265" y="60" width="200" height="90" rx="12" fill="#f4f1e6" stroke="#c9bd95"/>
+    <text x="365" y="98" text-anchor="middle" font-weight="bold">Render messages / docs</text>
+    <text x="365" y="124" text-anchor="middle" font-size="12">Tag each with fact ids + noise</text>
+    <rect x="510" y="60" width="200" height="90" rx="12" fill="#fbf0e2" stroke="#d9b07a"/>
+    <text x="610" y="98" text-anchor="middle" font-weight="bold">Gold = ledger query</text>
+    <text x="610" y="124" text-anchor="middle" font-size="12">Provenance + reachability check</text>
+    <rect x="755" y="60" width="185" height="90" rx="12" fill="#f7e6df" stroke="#d29a85"/>
+    <text x="847" y="98" text-anchor="middle" font-weight="bold">Human checks one snippet</text>
+    <text x="847" y="124" text-anchor="middle" font-size="12">Claim vs quote</text>
+  </g>
+  <path d="M220,105 L265,105" stroke="#6b6359" stroke-width="2" marker-end="url(#ar3)"/>
+  <path d="M465,105 L510,105" stroke="#6b6359" stroke-width="2" marker-end="url(#ar3)"/>
+  <path d="M710,105 L755,105" stroke="#6b6359" stroke-width="2" marker-end="url(#ar3)"/>
+  <text x="480" y="195" font-size="13" text-anchor="middle" fill="#29251f">Verification goes from global (understand the whole environment) to local (check one claim against its source)</text>
+</svg>
+<figcaption>Figure 4: know the answer by construction.</figcaption>
+</figure>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Approach</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td>Ground truth by construction</td><td>Write a fact ledger first, then render it into data; gold is a ledger query. Needles / canaries can be planted too</td></tr>
+    <tr><td>Gold with provenance</td><td>Every assertion carries a source id + quote; automatically check that the source is within the retrievable time range, indexed, and readable by the caller</td></tr>
+    <tr><td>Computable questions</td><td>Answers such as "who mentioned Y in X during a period" are computed by code — a code oracle instead of an LLM judge</td></tr>
+    <tr><td>Perturbation tests</td><td>Change one fact — the answer must change; add a distractor — it must not; remove the source — the agent must say it cannot find it</td></tr>
+    <tr><td>Micro-worlds</td><td>Each scenario gets a small dataset one person can fully read, used to verify correctness; the large environment only tests robustness at scale and under noise</td></tr>
+    <tr><td>Spend humans on disagreements</td><td>Only cases where judges disagree, or a judge disagrees with a code oracle, go to humans; add a stratified sample to estimate judge error and record inter-annotator agreement (IAA)</td></tr>
+    <tr><td>Verify the path first</td><td>expected → retrieved → model-visible → answer; find the first divergence. Checking "was it retrieved" is far cheaper than checking a whole synthesis</td></tr>
+  </tbody>
+</table>
+</div>
+<p><strong>What about real organizational data?</strong> It offers a realistic distribution, and <em>the person asking usually knows the answer</em>; the costs are privacy and compliance, irreproducibility, no gold, unshareable cases and selection bias. A workable split: <strong>real data to discover, synthetic data to regress</strong> — let data owners verify answers about their own data, and shrink each discovered failure into a minimal synthetic reproduction.</p>
+
+<h2 id="prompt">5. Problem 4: Fixing A with a prompt change breaks B</h2>
+<p>A system prompt is a <strong>global parameter</strong>: a sentence added to fix a few cases acts on every case. The average hides flips in both directions, and part of the churn is just generation randomness.</p>
+<figure>
+<svg viewBox="0 0 960 150" role="img" aria-label="per-case flips in a hypothetical example">
+  <rect width="960" height="150" fill="#fffdf8"/>
+  <g font-size="14" fill="#29251f">
+    <text x="20" y="40" font-weight="bold">Hypothetical: 100 cases, before vs after a prompt change</text>
+    <rect x="20" y="55" width="360" height="34" fill="#cfe3c8"/><text x="200" y="77" text-anchor="middle">Stayed pass 40</text>
+    <rect x="380" y="55" width="270" height="34" fill="#e6e0d3"/><text x="515" y="77" text-anchor="middle">Stayed fail 30</text>
+    <rect x="650" y="55" width="153" height="34" fill="#9dc79a"/><text x="726" y="77" text-anchor="middle">Up 17</text>
+    <rect x="803" y="55" width="117" height="34" fill="#e3a58f"/><text x="861" y="77" text-anchor="middle">Down 13</text>
+    <text x="20" y="118" font-size="13" fill="#6b6359">Net only +4, yet 30 cases flipped. Until you know how many flip when nothing changes, you cannot tell progress, regression or noise apart.</text>
+  </g>
+</svg>
+<figcaption>Figure 5: very different churn can hide under the same average (invented numbers).</figcaption>
+</figure>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Approach</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td>Per-case flips + slices</td><td>Always report up / down / unchanged, split by language, tone, length and task type</td></tr>
+    <tr><td>Know the noise flip rate</td><td>Run the same configuration twice (A/A) to get a baseline; flips count only above it</td></tr>
+    <tr><td>Pre-set a regression limit per slice</td><td>Set non-inferiority margins by user cost; a safety guardrail must be able to veto, not just be "reported"</td></tr>
+    <tr><td>Narrow the blast radius</td><td>Route the new prompt only where the evidence covers; other paths must render byte-identical prompts, locked by hash tests</td></tr>
+    <tr><td>Separate dev and held-out sets</td><td>A dev set whose failures you can read vs a held-out set you cannot; no held-out gain, no credit</td></tr>
+    <tr><td>Fix causes, not cases</td><td>Remove the general rule that causes the problem rather than patching exceptions for individual failures</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="mild">6. Problem 5: A rigorous experiment, a mild improvement</h2>
+<p>A common situation: you find a root cause from negative user feedback, change the prompt, and run the experiment properly — pre-registration, a held-out set, repeated generations, multi-vote judging, a permutation test — and get a statistically significant gain on the targeted issue, while overall user satisfaction barely moves. The experiment was not wrong; the causes are structural:</p>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Cause</th><th>What happens</th><th>Next time</th></tr></thead>
+  <tbody>
+    <tr><td>The target is only part of the dissatisfaction</td><td>The fixed issue is a small slice of negative feedback, which caps the overall impact</td><td><strong>Estimate the ceiling first</strong>: share × fixable fraction</td></tr>
+    <tr><td>Most cases do not move</td><td>Significance does not mean most cases changed; only a few may flip</td><td>Report per-case flips, not just a p-value</td></tr>
+    <tr><td>Judge and users disagree</td><td>For example, the judge rewards longer, more thorough answers while users prefer shorter ones</td><td><strong>Validate the instrument first</strong>: a judge that sees only the input, not the output, as a control — if it predicts user feedback equally well, the judge is not measuring output quality</td></tr>
+    <tr><td>Confounders invert the conclusion</td><td>For example, request difficulty drives both answer length and user rating, so "longer answers are rated worse" may be an artifact</td><td>Stratify by the confounder</td></tr>
+    <tr><td>Generation noise ≈ effect size</td><td>Reruns of the same configuration differ by about as much as the effect; repeating the judge does not help, only repeating generation does</td><td>Multiple generations per arm; compute power in advance and accept "inconclusive"</td></tr>
+    <tr><td>A model upgrade swamps the prompt</td><td>The model changes mid-experiment; old evidence no longer transfers, and the new model's own gain dwarfs the prompt's</td><td>Tie evidence to the model version; if an upgrade is scheduled, test on the new model or wait</td></tr>
+    <tr><td>User feedback is sparse and slow</td><td>Few ratings, self-selected, missing slice fields; confirmation takes weeks</td><td>Feedback to discover, offline paired experiments to decide, online to confirm</td></tr>
+    <tr><td>Changes no grader measures</td><td>For example, responses quietly become more formal, or stop asking clarifying questions — every gate still passes</td><td>Periodically diff output distributions to find what the instruments miss</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="tiers">7. What is solvable now, what needs trade-offs, what needs new methods</h2>
+<figure>
+<svg viewBox="0 0 960 300" role="img" aria-label="three feasibility tiers">
+  <rect width="960" height="300" fill="#fffdf8"/>
+  <g font-size="14" fill="#29251f">
+    <rect x="15" y="20" width="300" height="260" rx="14" fill="#eef4ea" stroke="#9db58f"/>
+    <text x="165" y="52" text-anchor="middle" font-weight="bold" font-size="16">A. Solvable now</text>
+    <text x="165" y="76" text-anchor="middle" font-size="12" fill="#2f5d34">Needs discipline and hours</text>
+    <text x="35" y="110">• Per-case flips + A/A baseline</text>
+    <text x="35" y="136">• Automatic gold reachability check</text>
+    <text x="35" y="162">• Offline stream replay</text>
+    <text x="35" y="188">• Minimal pairs / perturbations</text>
+    <text x="35" y="214">• "Input-only" judge control</text>
+    <text x="35" y="240">• Versioning policy, ceiling math</text>
+    <rect x="330" y="20" width="300" height="260" rx="14" fill="#fbf0e2" stroke="#d9b07a"/>
+    <text x="480" y="52" text-anchor="middle" font-weight="bold" font-size="16">B. Feasible, with trade-offs</text>
+    <text x="480" y="76" text-anchor="middle" font-size="12" fill="#7a5a12">Realism vs reproducibility, cost, speed, privacy</text>
+    <text x="350" y="110">• Evals that need a live system</text>
+    <text x="350" y="136">• Time-fenced retrieval / live posting</text>
+    <text x="350" y="162">• Simulated-user harness</text>
+    <text x="350" y="188">• Many repeated generations</text>
+    <text x="350" y="214">• Real data / dogfood verification</text>
+    <text x="350" y="240">• Weeks of online confirmation</text>
+    <rect x="645" y="20" width="300" height="260" rx="14" fill="#f7e6df" stroke="#d29a85"/>
+    <text x="795" y="52" text-anchor="middle" font-weight="bold" font-size="16">C. Needs new methods</text>
+    <text x="795" y="76" text-anchor="middle" font-size="12" fill="#8a3a24">No mature answer yet</text>
+    <text x="665" y="110">• Ground truth for proactive timing</text>
+    <text x="665" y="136">• Proving "no future was seen"</text>
+    <text x="665" y="162">• Multi-party chat user simulator</text>
+    <text x="665" y="188">• Summaries no human can verify</text>
+    <text x="665" y="214">• Judges aligned with user preference</text>
+    <text x="665" y="240">• Regressions no grader measures</text>
+  </g>
+</svg>
+<figcaption>Figure 6: the further right, the less "more time" alone solves it.</figcaption>
+</figure>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Tier C problem</th><th>Why it is hard</th><th>Possible directions</th></tr></thead>
+  <tbody>
+    <tr><td>Proactive timing</td><td>No gold for "one message earlier vs later"; logs show only what the agent did, not what would have happened had it spoken</td><td>Counterfactual / off-policy estimation from logs; label an "acceptable window" instead of a single point</td></tr>
+    <tr><td>Proving no future was seen</td><td>The influence leaves no string; absence cannot be proven from outputs</td><td>Cut it architecturally; or compare answer distributions with and without the fence</td></tr>
+    <tr><td>Multi-party chat simulator</td><td>Existing benchmarks are mostly one-to-one; group chat has social dynamics, silence and interruptions</td><td>Learn multi-role behavior from real conversations; first define "realistic enough"</td></tr>
+    <tr><td>Summaries no human can verify</td><td>On large existing data, nobody knows what "complete" is</td><td>Decompose into locally verifiable questions, cross-check models, send only disagreements to humans</td></tr>
+    <tr><td>Judges aligned with users</td><td>User signals are sparse, biased and confounded</td><td>Calibrate the judge with a small amount of feedback; validate agreement within strata</td></tr>
+    <tr><td>Unmeasured regressions</td><td>You do not know what to measure</td><td>Automatically diff two output sets, have a model propose differences and new rubrics, then confirm with humans</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="questions">8. Open questions for readers</h2>
+<ol>
+  <li>How do you evaluate the <em>timing</em> of a proactive agent? Is there a better labeling scheme than an "acceptable window"?</li>
+  <li>How do you validate your simulated users? Anything that works for multi-party settings?</li>
+  <li>When the data is too large for anyone to read, where does your ground truth come from?</li>
+  <li>Any real experience correlating offline metrics with online user outcomes?</li>
+</ol>
+
+<h2 id="refs">9. References</h2>
+<ul>
+  <li><a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents">Anthropic: Demystifying evals for AI agents</a> — capability vs regression, pass@k vs pass^k, simulated users, grading outcomes rather than paths.</li>
+  <li>τ-bench (Yao et al., 2024) and τ²-bench — multi-turn agent benchmarks with an LLM-simulated user, graded on final environment state.</li>
+</ul>
+
+<h2>10. Change log</h2>
+<p><time datetime="2026-10-07">2026-10-07</time> — English translation of the 2026-10-06 public draft.</p>
+<p><time datetime="2026-10-15">2026-10-15</time> — Problem 5: replaced three examples with more general ones.</p>
+
+</main>
+</div>
+</body>
+</html>
